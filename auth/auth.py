@@ -41,15 +41,19 @@ class LDAPAuth:
             return True
         except ldap.LDAPError as e:
             return False, e
+        finally:
+            self.disconnect()
 
-    def authenticate(self, username, password) -> bool:
+    def authenticate(self, username, password):
         try:
             user_dn = 'cn=' + username + ',' + self.ldap_base_dn
             self.ldap_connection.simple_bind_s(user_dn, password)
             return True
         except ldap.INVALID_CREDENTIALS:
-            return False
+            return (False, 'Invalid credentials')
         except ldap.SERVER_DOWN:
-            return False
-        except ldap.LDAPError:
-            return False
+            return (False, 'LDAP server is down')
+        except ldap.LDAPError as e:
+            return False, e
+        finally:
+            self.disconnect()
